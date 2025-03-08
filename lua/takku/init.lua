@@ -3,8 +3,8 @@ local M = {}
 M.config = require("takku.config")
 M.core = require("takku.core")
 
-function M.setup(user_config)
-  M.config.setup(user_config)
+function M.setup(opts)
+  M.config.setup(opts)
   M.core.setup()
 end
 

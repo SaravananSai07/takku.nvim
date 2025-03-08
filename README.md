@@ -17,19 +17,25 @@ use({
 ### [LazyVim](https://github.com/LazyVim/LazyVim)
 ```lua
 {
-  "SaravananSai07/takku.nvim",
-  dependencies = {
-    "nvim-telescope/telescope.nvim", -- Optional, if Telescope is preferred for viewing / modifying the lists
-  },
-  config = function()
-    require("takku").setup({
-      config = true,
-      enable_telescope = true, -- Set to false if you don't want Telescope
-      on_attach = function()
-        vim.keymap.set("n", "<leader>ta", "<cmd>lua require('takku.nvim').add_file()<CR>")
-      end
-    })
-  end
+    "SaravananSai07/takku.nvim",
+    dependencies = {
+        "nvim-telescope/telescope.nvim", -- Optional, if Telescope is preferred for viewing / modifying the lists
+    },
+    opts = { -- Skip this if default bindings and config works for you
+        mappings = {
+            next_file = "<leader>tn",
+            prev_file = "<leader>tp",
+            add_file = "<leader>ta",
+            delete_file = "<leader>td",
+            goto_file = "<leader>t",
+            show_list = "<leader>tl",
+        },
+        enable_telescope_integration = true,
+        notifications = true,
+    },
+    config = function(_, opts)
+        require("takku").setup(opts)
+    end,
 }
 ```
 

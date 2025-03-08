@@ -16,8 +16,8 @@ M.default_config = {
 
 M.config = {}
 
-function M.setup(user_config)
-  M.config = vim.tbl_deep_extend("force", M.default_config, user_config or {})
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend("force", M.default_config, opts or {})
 end
 
 return M
