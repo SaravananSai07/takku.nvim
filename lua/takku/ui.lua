@@ -3,6 +3,12 @@ local config = require("takku.config")
 local utils = require("takku.utils")
 
 function M.show_telescope_ui(file_list, on_delete)
+    local has_telescope, telescope = pcall(require, "telescope")
+    if not has_telescope then
+        vim.notify("Telescope.nvim is required for this feature", vim.log.levels.ERROR)
+        return
+    end
+
     local actions = require("telescope.actions")
     local action_state = require("telescope.actions.state")
     local pickers = require("telescope.pickers")
@@ -19,21 +25,27 @@ function M.show_telescope_ui(file_list, on_delete)
                     display = utils.get_filename(entry),
                     ordinal = utils.get_filename(entry),
                 }
-            end
+            end,
         }),
         sorter = conf.generic_sorter({}),
-        attach_mappings = function(prompt_bufnr)
+        attach_mappings = function(prompt_bufnr, map)
+            -- Open selected file
             actions.select_default:replace(function()
                 actions.close(prompt_bufnr)
                 local selection = action_state.get_selected_entry()
-                vim.cmd("edit " .. selection.value)
+                if selection then
+                    vim.cmd("edit " .. selection.value)
+                end
             end)
 
-            actions._delete:replace(function()
+            -- Delete file from list (mapped to <C-d>)
+            map("i", "<C-d>", function()
                 local selection = action_state.get_selected_entry()
-                on_delete(selection.value)
-                actions.close(prompt_bufnr)
-                M.show_list(file_list, on_delete) -- Refresh
+                if selection then
+                    on_delete(selection.value)
+                    actions.close(prompt_bufnr)
+                    M.show_list(file_list, on_delete) -- Refresh the list
+                end
             end)
 
             return true
