@@ -1,6 +1,7 @@
 local M = {}
 local config = require("takku.config")
 local utils = require("takku.utils")
+local core = require("takku.core")
 
 function M.show_telescope_ui(file_list, on_delete)
     local has_telescope, telescope = pcall(require, "telescope")
@@ -14,6 +15,21 @@ function M.show_telescope_ui(file_list, on_delete)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local conf = require("telescope.config").values
+    local previewers = require("telescope.previewers")
+
+    local previewer = previewers.new_buffer_previewer({
+        title = "File Preview",
+        define_preview = function(self, entry, status)
+            local file_path = entry.value
+            local cursor_pos = core.cursor_positions[file_path] or { 1, 0 }
+
+            -- Open the file in the preview buffer
+            vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, vim.fn.readfile(file_path))
+
+            -- Set the cursor position in the preview buffer
+            vim.api.nvim_win_set_cursor(self.state.winid, cursor_pos)
+        end,
+    })
 
     pickers.new({}, {
         prompt_title = "Takku List",
@@ -28,6 +44,7 @@ function M.show_telescope_ui(file_list, on_delete)
             end,
         }),
         sorter = conf.generic_sorter({}),
+        previewer = previewer,
         attach_mappings = function(prompt_bufnr, map)
             -- Open selected file
             actions.select_default:replace(function()
@@ -53,6 +70,41 @@ function M.show_telescope_ui(file_list, on_delete)
     }):find()
 end
 
+local function native_ui_preview_window(file_path, cursor_pos)
+    local width = math.floor(vim.o.columns * 0.6)
+    local height = math.floor(vim.o.lines * 0.6)
+    local row = math.floor((vim.o.lines - height) / 2)
+    local col = math.floor((vim.o.columns - width) / 2)
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    local win = vim.api.nvim_open_win(buf, false, {
+        relative = "editor",
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        style = "minimal",
+        border = "rounded",
+    })
+
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.fn.readfile(file_path))
+
+    if cursor_pos then
+        vim.api.nvim_win_set_cursor(win, cursor_pos)
+    end
+
+    -- Close the preview window when leaving the buffer
+    vim.api.nvim_create_autocmd("BufLeave", {
+        buffer = buf,
+        callback = function()
+            vim.api.nvim_win_close(win, true)
+        end,
+        once = true,
+    })
+
+    return win
+end
+
 function M.show_native_ui(file_list)
     vim.ui.select(
         file_list,
@@ -64,6 +116,9 @@ function M.show_native_ui(file_list)
         },
         function(choice)
             if choice then
+                local cursor_pos = core.cursor_positions[choice] or { 1, 0 }
+                native_ui_preview_window(choice, cursor_pos)
+
                 vim.cmd("edit " .. choice)
             end
         end
