@@ -4,6 +4,10 @@ local utils = require("takku.utils")
 local state = require("takku.state")
 
 local function validate_cursor_position(cursor_pos, lines)
+  if #lines == 0 then
+    return { 1, 0 } -- Buffer has 1 line even if the file is empty
+  end
+
   -- Ensure cursor_pos is valid
   if type(cursor_pos) ~= "table" or #cursor_pos < 2 then
     return { 1, 0 } -- Default to the start of the file
