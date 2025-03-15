@@ -1,7 +1,7 @@
 local M = {}
 local config = require("takku.config")
 local utils = require("takku.utils")
-local core = require("takku.core")
+local state = require("takku.state")
 
 function M.show_telescope_ui(file_list, on_delete)
     local has_telescope, telescope = pcall(require, "telescope")
@@ -21,7 +21,7 @@ function M.show_telescope_ui(file_list, on_delete)
         title = "File Preview",
         define_preview = function(self, entry, status)
             local file_path = entry.value
-            local cursor_pos = core.cursor_positions[file_path] or { 1, 0 }
+            local cursor_pos = state.cursor_positions[file_path] or { 1, 0 }
 
             -- Open the file in the preview buffer
             vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, vim.fn.readfile(file_path))
@@ -116,7 +116,7 @@ function M.show_native_ui(file_list)
         },
         function(choice)
             if choice then
-                local cursor_pos = core.cursor_positions[choice] or { 1, 0 }
+                local cursor_pos = state.cursor_positions[choice] or { 1, 0 }
                 native_ui_preview_window(choice, cursor_pos)
 
                 vim.cmd("edit " .. choice)
