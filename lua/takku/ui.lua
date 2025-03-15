@@ -4,12 +4,12 @@ local utils = require("takku.utils")
 local state = require("takku.state")
 
 local function validate_cursor_position(cursor_pos, lines)
-  if #lines == 0 then
+  if not lines or #lines == 0 then
     return { 1, 0 } -- Buffer has 1 line even if the file is empty
   end
 
   -- Ensure cursor_pos is valid
-  if type(cursor_pos) ~= "table" or #cursor_pos < 2 then
+  if not cursor_pos or type(cursor_pos) ~= "table" or #cursor_pos < 2 then
     return { 1, 0 } -- Default to the start of the file
   end
 
@@ -66,9 +66,11 @@ function M.show_telescope_ui(file_list, on_delete)
       end
 
       local cursor_pos = state.cursor_positions[file_path] or { 1, 0 }
+      vim.notify("Cursor positions (pre validation): [" .. cursor_pos[1] .. ", " .. cursor_pos[2] .. "]", vim.log.levels.INFO)
 
       local lines = vim.fn.readfile(file_path)
       cursor_pos = validate_cursor_position(cursor_pos, lines)
+      vim.notify("Cursor positions (post validation): [" .. cursor_pos[1] .. ", " .. cursor_pos[2] .. "]", vim.log.levels.INFO)
 
       vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
