@@ -66,17 +66,13 @@ function M.show_telescope_ui(file_list, on_delete)
       end
 
       local cursor_pos = state.cursor_positions[file_path] or { 1, 0 }
-      vim.notify("Cursor positions (pre validation): [" .. cursor_pos[1] .. ", " .. cursor_pos[2] .. "]", vim.log.levels.INFO)
-
       local lines = vim.fn.readfile(file_path)
-
       vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
       vim.schedule(function()
         if vim.api.nvim_win_is_valid(self.state.winid) and vim.api.nvim_buf_is_valid(self.state.bufnr) then
           local buffer_lines = vim.api.nvim_buf_get_lines(self.state.bufnr, 0, -1, false)
           cursor_pos = validate_cursor_position(cursor_pos, buffer_lines)
-          vim.notify("Cursor positions (post validation): [" .. cursor_pos[1] .. ", " .. cursor_pos[2] .. "]", vim.log.levels.INFO)
           pcall(vim.api.nvim_win_set_cursor, self.state.winid, cursor_pos)
         else
           vim.notify("Invalid window or buffer", vim.log.levels.WARN)
@@ -144,14 +140,16 @@ local function native_ui_preview_window(file_path, cursor_pos)
   local lines = vim.fn.readfile(file_path)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-  cursor_pos = validate_cursor_position(cursor_pos, lines)
-
-  if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf) then
-    -- Set the cursor position in the preview buffer
-    vim.api.nvim_win_set_cursor(win, cursor_pos)
-  else
-    vim.notify("Invalid window or buffer", vim.log.levels.WARN)
-  end
+  vim.schedule(function()
+    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf) then
+      local buffer_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      cursor_pos = validate_cursor_position(cursor_pos, buffer_lines)
+      -- Set the cursor position in the preview buffer
+      pcall(vim.api.nvim_win_set_cursor, win, cursor_pos)
+    else
+      vim.notify("Invalid window or buffer", vim.log.levels.WARN)
+    end
+  end)
 
   -- Close the preview window when leaving the buffer
   vim.api.nvim_create_autocmd("BufLeave", {
