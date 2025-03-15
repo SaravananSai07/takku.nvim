@@ -38,7 +38,7 @@ local function file_exists(file_path)
 end
 
 function M.show_telescope_ui(file_list, on_delete)
-  local has_telescope, telescope = pcall(require, "telescope")
+  local has_telescope, _ = pcall(require, "telescope")
   if not has_telescope then
     vim.notify("Telescope.nvim is required for this feature", vim.log.levels.ERROR)
     return
@@ -53,7 +53,7 @@ function M.show_telescope_ui(file_list, on_delete)
 
   local previewer = previewers.new_buffer_previewer({
     title = "File Preview",
-    define_preview = function(self, entry, status)
+    define_preview = function(self, entry, _)
       local file_path = entry.value
 
       if not file_exists(file_path) then
@@ -66,11 +66,14 @@ function M.show_telescope_ui(file_list, on_delete)
       local lines = vim.fn.readfile(file_path)
       cursor_pos = validate_cursor_position(cursor_pos, lines)
 
-      -- Open the file in the preview buffer
       vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
-      -- Set the cursor position in the preview buffer
-      vim.api.nvim_win_set_cursor(self.state.winid, cursor_pos)
+      if vim.api.nvim_win_is_valid(self.state.winid) and vim.api.nvim_buf_is_valid(self.state.bufnr) then
+        -- Set the cursor position in the preview buffer
+        vim.api.nvim_win_set_cursor(self.state.winid, cursor_pos)
+      else
+        vim.notify("Invalid window or buffer", vim.log.levels.WARN)
+      end
     end,
   })
 
@@ -134,7 +137,13 @@ local function native_ui_preview_window(file_path, cursor_pos)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   cursor_pos = validate_cursor_position(cursor_pos, lines)
-  vim.api.nvim_win_set_cursor(win, cursor_pos)
+
+  if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf) then
+    -- Set the cursor position in the preview buffer
+    vim.api.nvim_win_set_cursor(win, cursor_pos)
+  else
+    vim.notify("Invalid window or buffer", vim.log.levels.WARN)
+  end
 
   -- Close the preview window when leaving the buffer
   vim.api.nvim_create_autocmd("BufLeave", {
