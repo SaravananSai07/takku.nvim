@@ -127,6 +127,13 @@ end
 
 function M.setup()
   M.setup_mappings()
+
+  state.load_state()
+
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    callback = state.save_state,
+  })
+
   vim.api.nvim_create_autocmd("BufLeave", {
     callback = M.save_cursor_position,
   })
