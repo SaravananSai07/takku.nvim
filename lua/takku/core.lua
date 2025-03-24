@@ -24,6 +24,7 @@ function M.add_file()
     end
   end
   M.save_cursor_position()
+  state.save_state()
 end
 
 function M.remove_file(file_path)
@@ -38,6 +39,7 @@ function M.remove_file(file_path)
       return
     end
   end
+  state.save_state()
 end
 
 function M.save_cursor_position()
@@ -129,10 +131,7 @@ function M.setup()
   M.setup_mappings()
 
   state.load_state()
-
-  vim.api.nvim_create_autocmd("VimLeavePre", {
-    callback = state.save_state,
-  })
+  M.setup_numbered_mappings()
 
   vim.api.nvim_create_autocmd("BufLeave", {
     callback = M.save_cursor_position,

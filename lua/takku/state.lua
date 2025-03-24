@@ -13,7 +13,7 @@ function M.get_state_file_path()
   local takku_dir = data_dir .. "/takku"
 
   -- Create directory if it doesn't exist
-  if not vim.fn.isdirectory(takku_dir) then
+  if not vim.fn.isdirectory(takku_dir) or vim.fn.isdirectory(takku_dir) ~= 1 then
     vim.fn.mkdir(takku_dir, "p")
   end
 
@@ -55,6 +55,9 @@ function M.load_state()
               table.insert(M.file_list, path)
             end
           end
+        end
+        if #M.file_list > 0 then
+          vim.notify("[Takku] Loaded list (" .. #M.file_list .. " files)", vim.log.levels.INFO)
         end
 
         if state_data.cursor_positions then
