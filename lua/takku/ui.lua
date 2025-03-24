@@ -120,49 +120,6 @@ function M.show_telescope_ui(file_list, on_delete)
   }):find()
 end
 
-local function native_ui_preview_window(file_path, cursor_pos)
-  local width = math.floor(vim.o.columns * 0.6)
-  local height = math.floor(vim.o.lines * 0.6)
-  local row = math.floor((vim.o.lines - height) / 2)
-  local col = math.floor((vim.o.columns - width) / 2)
-
-  local buf = vim.api.nvim_create_buf(false, true)
-  local win = vim.api.nvim_open_win(buf, false, {
-    relative = "editor",
-    width = width,
-    height = height,
-    row = row,
-    col = col,
-    style = "minimal",
-    border = "rounded",
-  })
-
-  local lines = vim.fn.readfile(file_path)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-
-  vim.schedule(function()
-    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf) then
-      local buffer_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-      cursor_pos = validate_cursor_position(cursor_pos, buffer_lines)
-      -- Set the cursor position in the preview buffer
-      pcall(vim.api.nvim_win_set_cursor, win, cursor_pos)
-    else
-      vim.notify("Invalid window or buffer", vim.log.levels.WARN)
-    end
-  end)
-
-  -- Close the preview window when leaving the buffer
-  vim.api.nvim_create_autocmd("BufLeave", {
-    buffer = buf,
-    callback = function()
-      vim.api.nvim_win_close(win, true)
-    end,
-    once = true,
-  })
-
-  return win
-end
-
 function M.show_native_ui(file_list)
   vim.ui.select(
     file_list,
@@ -179,9 +136,9 @@ function M.show_native_ui(file_list)
           return
         end
         local cursor_pos = state.cursor_positions[choice] or { 1, 0 }
-        native_ui_preview_window(choice, cursor_pos)
 
         vim.cmd("edit " .. choice)
+        vim.api.nvim_win_set_cursor(0, cursor_pos)
       end
     end
   )
