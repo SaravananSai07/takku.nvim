@@ -69,6 +69,12 @@ function M.show_telescope_ui(file_list, on_delete)
       local lines = vim.fn.readfile(file_path)
       vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
+      -- Enable syntax highlighting
+      local filetype = vim.filetype.match({ filename = file_path })
+      if filetype then
+        vim.api.nvim_buf_set_option(self.state.bufnr, 'filetype', filetype)
+      end
+
       vim.schedule(function()
         if vim.api.nvim_win_is_valid(self.state.winid) and vim.api.nvim_buf_is_valid(self.state.bufnr) then
           local buffer_lines = vim.api.nvim_buf_get_lines(self.state.bufnr, 0, -1, false)
@@ -88,8 +94,8 @@ function M.show_telescope_ui(file_list, on_delete)
       entry_maker = function(entry)
         return {
           value = entry,
-          display = utils.get_filename(entry),
-          ordinal = utils.get_filename(entry),
+          display = utils.get_relative_path(entry),
+          ordinal = utils.get_relative_path(entry),
         }
       end,
     }),
@@ -126,7 +132,7 @@ function M.show_native_ui(file_list)
     {
       prompt = "Takku List",
       format_item = function(item)
-        return utils.get_filename(item)
+        return utils.get_relative_path(item)
       end,
     },
     function(choice)

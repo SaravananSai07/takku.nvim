@@ -5,6 +5,10 @@ local state = require("takku.state")
 
 local M = {}
 
+local function keymap_opts(desc)
+  return { noremap = true, silent = true, desc = desc }
+end
+
 function M.add_file()
   local file_path = vim.api.nvim_buf_get_name(0)
   if file_path == "" then
@@ -99,31 +103,31 @@ end
 
 function M.setup_mappings()
   local map = vim.keymap.set
-  local opts = { noremap = true, silent = true }
 
-  map("n", config.config.mappings.add_file, M.add_file, opts)
+  map("n", config.config.mappings.add_file, M.add_file, keymap_opts("Takku add file"))
   map("n", config.config.mappings.delete_file, function()
     M.remove_file(vim.api.nvim_buf_get_name(0))
-  end, opts)
+  end, keymap_opts("Takku delete file"))
 
-  map("n", config.config.mappings.next_file, M.next_file, opts)
-  map("n", config.config.mappings.prev_file, M.prev_file, opts)
+  map("n", config.config.mappings.next_file, M.next_file, keymap_opts("Takku next file"))
+  map("n", config.config.mappings.prev_file, M.prev_file, keymap_opts("Takku previous file"))
 
   M.setup_numbered_mappings()
 
-  map("n", config.config.mappings.show_list, M.show_file_list, opts)
+  map("n", config.config.mappings.show_list, M.show_file_list, keymap_opts("Takku list files"))
 end
 
 function M.setup_numbered_mappings()
   local map = vim.keymap.set
-  local opts = { noremap = true, silent = true }
+
   for i = 1, #state.file_list do
     if i > config.config.max_files then
       break
     end
+    local file_path = state.file_list[i]
     map("n", config.config.mappings.goto_file .. i, function()
       M.goto_file(i)
-    end, opts)
+    end, keymap_opts("Open " .. utils.get_relative_path(file_path)))
   end
 end
 
