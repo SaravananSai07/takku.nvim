@@ -92,9 +92,16 @@ function M.show_telescope_ui(file_list, on_delete)
     finder = finders.new_table({
       results = file_list,
       entry_maker = function(entry)
+        local index = 1
+        for i, file in ipairs(file_list) do
+          if file == entry then
+            index = i
+            break
+          end
+        end
         return {
           value = entry,
-          display = utils.get_relative_path(entry),
+          display = string.format("[%d] %s", index, utils.get_relative_path(entry)),
           ordinal = utils.get_relative_path(entry),
         }
       end,
@@ -127,23 +134,32 @@ function M.show_telescope_ui(file_list, on_delete)
 end
 
 function M.show_native_ui(file_list)
+  local indexed_items = {}
+  for i, item in ipairs(file_list) do
+    table.insert(indexed_items, {
+      index = i,
+      path = item,
+      display = string.format("[%d] %s", i, utils.get_relative_path(item))
+    })
+  end
+
   vim.ui.select(
-    file_list,
+    indexed_items,
     {
       prompt = "Takku List",
       format_item = function(item)
-        return utils.get_relative_path(item)
+        return item.display
       end,
     },
     function(choice)
       if choice then
-        if not file_exists(choice) then
-          vim.notify("File has been removed: " .. choice, vim.log.levels.WARN)
+        if not file_exists(choice.path) then
+          vim.notify("File has been removed: " .. choice.path, vim.log.levels.WARN)
           return
         end
-        local cursor_pos = state.cursor_positions[choice] or { 1, 0 }
+        local cursor_pos = state.cursor_positions[choice.path] or { 1, 0 }
 
-        vim.cmd("edit " .. choice)
+        vim.cmd("edit " .. choice.path)
         vim.api.nvim_win_set_cursor(0, cursor_pos)
       end
     end
